@@ -1,5 +1,5 @@
 # SparkApplication
-##InstaDataEDA
+#InstaDataEDA
 This is a scala code that reads Instagram data from CSV files and performs exploratory data analysis(EDA) using Apache Spark library.
 The code allows users to join two CSV files, performs various data cleaning operations and generate insights using SparkSQL.
 To use this code, you will need to install the following dependencies:
