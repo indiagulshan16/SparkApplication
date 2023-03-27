@@ -18,14 +18,14 @@ To run the code, simply execute the `InstaDataEDA.scala` file in your Scala IDE 
 
 Here are some examples of how to use the code:
 
-- To join the two CSV files based on the `profile_id` column: \n
+- To join the two CSV files based on the `profile_id` column: 
 val joinedDF = joinDataFrames(instagramDF, instagramPF, "profile_id")
 
-- To generate a summary of the Instagram data: \n
+- To generate a summary of the Instagram data: 
 val summaryDF = joinedDF.select(avg("numbr_likes"), avg("number_comments"), count("post_id"))
 summaryDF.show()
 
 
-- To filter out all rows where the `numbr_likes` column is less than 100: \n
+- To filter out all rows where the `numbr_likes` column is less than 100: <br />
 val filteredDF = joinedDF.filter(col("numbr_likes") > 100)
 filteredDF.show()
