@@ -1,5 +1,5 @@
 # SparkApplication
-#InstaDataEDA
+
 This is a scala code that reads Instagram data from CSV files and performs exploratory data analysis(EDA) using Apache Spark library.
 The code allows users to join two CSV files, performs various data cleaning operations and generate insights using SparkSQL.
 To use this code, you will need to install the following dependencies:
@@ -18,14 +18,14 @@ To run the code, simply execute the `InstaDataEDA.scala` file in your Scala IDE 
 
 Here are some examples of how to use the code:
 
-- To join the two CSV files based on the `profile_id` column:
+- To join the two CSV files based on the `profile_id` column: \n
 val joinedDF = joinDataFrames(instagramDF, instagramPF, "profile_id")
 
-- To generate a summary of the Instagram data:
+- To generate a summary of the Instagram data: \n
 val summaryDF = joinedDF.select(avg("numbr_likes"), avg("number_comments"), count("post_id"))
 summaryDF.show()
 
 
-- To filter out all rows where the `numbr_likes` column is less than 100:
+- To filter out all rows where the `numbr_likes` column is less than 100: \n
 val filteredDF = joinedDF.filter(col("numbr_likes") > 100)
 filteredDF.show()
