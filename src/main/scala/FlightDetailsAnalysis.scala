@@ -3,10 +3,7 @@ import org.apache.spark.sql.functions._
 import org.apache.spark._
 import org.apache.spark.sql.Encoders
 import org.apache.spark.sql.expressions.Window
-import org.apache.spark.sql.functions.percentile_approx
-
 import java.time.Duration
-import org.apache.spark.sql.functions._
 import org.apache.spark.sql.types.{BooleanType, DateType, DoubleType, IntegerType, LongType, StringType, StructField, StructType}
 object FlightDetailsAnalysis {
   def main(args: Array[String]) {
@@ -166,40 +163,114 @@ object FlightDetailsAnalysis {
     // Drop any rows with missing values
     val dfClean = flightDFNew.na.drop()
 
-    // Convert data types of some columns
-    val dfCleanTyped = dfClean
-      .withColumn("searchDate", to_date(col("searchDate"), "yyyy-MM-dd"))
-      .withColumn("flightDate", to_date(col("flightDate"), "yyyy-MM-dd"))
-      .withColumn("travelDurationSeconds", col("travelDurationSeconds").cast(IntegerType))
-      .withColumn("baseFare", col("baseFare").cast(DoubleType))
-      .withColumn("totalFare", col("totalFare").cast(DoubleType))
-      .withColumn("seatsRemaining", col("seatsRemaining").cast(IntegerType))
+//
+//    // Convert data types of some columns
+//    val dfCleanTyped = dfClean
+//      .withColumn("searchDate", to_date(col("searchDate"), "yyyy-MM-dd"))
+//      .withColumn("flightDate", to_date(col("flightDate"), "yyyy-MM-dd"))
+//      .withColumn("travelDurationSeconds", col("travelDurationSeconds").cast(IntegerType))
+//      .withColumn("baseFare", col("baseFare").cast(DoubleType))
+//      .withColumn("totalFare", col("totalFare").cast(DoubleType))
+//      .withColumn("seatsRemaining", col("seatsRemaining").cast(IntegerType))
+//
+//    // Group by starting airport and calculate average base fare and total fare
+//    val avgFaresByAirport = dfCleanTyped
+//      .groupBy("startingAirport")
+//      .agg(avg("baseFare").as("avgBaseFare").cast(DoubleType), avg("totalFare").as("avgTotalFare").cast(DoubleType))
+//    // Show some sample data
+//    avgFaresByAirport.show(10)
+//
+//    // Calculate correlation between travel duration and base fare
+//    val corr = dfCleanTyped.stat.corr("travelDurationSeconds", "baseFare")
+//
+//    // Print the correlation coefficient
+//    println(s"Correlation between travel duration and base fare: $corr")
+//
+//    // Plot a histogram of totalFare
+//    dfCleanTyped.select("totalFare").rdd.map(r => r.getDouble(0)).histogram(10)
+//    // Plot a histogram of the "seatsRemaining" column
+//    val seatsHistogram = dfCleanTyped.select("seatsRemaining").rdd.map(r => r(0).asInstanceOf[Int]).histogram(10)
+//
+//    println("Seats Remaining Histogram:")
+//    seatsHistogram._1.zip(seatsHistogram._2).foreach { case (seat, count) =>
+//      println(s"$seat - ${seat + seatsHistogram._1(1)}: $count")
+//    }
 
-    // Group by starting airport and calculate average base fare and total fare
-    val avgFaresByAirport = dfCleanTyped
-      .groupBy("startingAirport")
-      .agg(avg("baseFare").as("avgBaseFare"), avg("totalFare").as("avgTotalFare"))
 
-    // Show some sample data
-    avgFaresByAirport.show(10)
 
-    // Calculate correlation between travel duration and base fare
-    val corr = dfCleanTyped.stat.corr("travelDurationSeconds", "baseFare")
 
-    // Print the correlation coefficient
-    println(s"Correlation between travel duration and base fare: $corr")
+    // Clean the data by dropping rows with missing values and duplicates
+    val cleanedData = flightDFNew.na.drop().dropDuplicates()
 
-    // Plot a histogram of totalFare
-    dfCleanTyped.select("totalFare").rdd.map(r => r.getDouble(0)).histogram(10)
-    // Plot a histogram of the "seatsRemaining" column
-    val seatsHistogram = dfCleanTyped.select("seatsRemaining").rdd.map(r => r(0).asInstanceOf[Int]).histogram(10)
+    // Compute the correlation between baseFare and totalFare
+    cleanedData.stat.corr("baseFare", "totalFare")
 
-    println("Seats Remaining Histogram:")
-    seatsHistogram._1.zip(seatsHistogram._2).foreach { case (seat, count) =>
-      println(s"$seat - ${seat + seatsHistogram._1(1)}: $count")
-      spark.stop()
-    }
+    // Analyze the data at a weekly granularity
+    val weeklyData = flightDFNew.withColumn("week", weekofyear(col("flightDate"))).groupBy("week").agg(avg("baseFare"), count("legId"))
+    weeklyData.show(5)
+    //Check the distinct values in a column
+    flightDFNew.select("startingAirport").distinct().show(5)
 
+    //Check the statistical summary of numerical columns
+    flightDFNew.describe("baseFare", "totalFare").show(5)
+
+    //Check the average travel distance by cabin class
+    flightDFNew.groupBy("segmentsCabinCode").agg(avg("totalTravelDistance")).show(5)
+
+    //Check the number of flights by airline
+    flightDFNew.groupBy("AirlineName").count().orderBy(desc("count")).show(5)
+
+    //Check the number of non-stop flights
+    println("Number of non-stop flights" + flightDFNew.filter("isNonStop = true").count())
+
+    //Check the number of flights by starting airport and destination airport
+    flightDFNew.groupBy("startingAirport", "destinationAirport").count().orderBy(desc("count")).show(5)
+
+    //Check the number of flights by month
+    flightDFNew.withColumn("month", month(col("flightDate")))
+      .groupBy("month")
+      .count()
+      .orderBy("month")
+      .show(10)
+
+    //Check the number of flights by day of week
+//    flightDFNew.withColumn("dayOfWeek", dayofweek(col("flightDate")))
+//      .groupBy("dayOfWeek")
+//      .count()
+//      .orderBy("dayOfWeek")
+//      .show(5)
+    flightDFNew.withColumn("dayOfWeek", date_format(date_format(col("flightDate"), "EEEE"), "EEEE"))
+      .groupBy("dayOfWeek")
+      .count()
+      .orderBy("dayOfWeek")
+      .show(5)
+
+    //Check the average fare by airline
+    flightDFNew.groupBy("AirlineName").agg(avg("totalFare")).orderBy(desc("avg(totalFare)")).show()
+
+    //Check the number of flights by travel duration
+    flightDFNew.withColumn("travelDurationSeconds", round(col("travelDurationSeconds") * 60, 2))
+      .groupBy("travelDurationSeconds")
+      .count()
+      .orderBy(desc("count"))
+      .show(5)
+
+  //Check the number of flights by refundable status
+    flightDFNew.groupBy("isRefundable").count().persist().show(5)
+
+    //Check the percentage of seats remaining
+    flightDFNew.select(round(avg(col("seatsRemaining")), 2).alias("avgSeatsRemaining")).persist().show(5)
+
+    //Check the number of flights by equipment description
+    flightDFNew.groupBy("segmentsEquipmentDescription").count().orderBy(desc("count")).persist().show(5)
+
+    //Check the percentage of non-stop flights
+    val nonStopFlights = flightDFNew.filter(col("isNonStop") === true).count() / flightDFNew.count().toDouble * 100
+    println("percentage of non-stop flights is " + nonStopFlights)
+
+    //Check the average travel duration by airline
+    flightDFNew.groupBy("AirlineName").agg(avg("travelDurationSeconds")).orderBy(desc("avg(travelDuration)")).persist().show(5)
+    spark.stop()
 
   }
 }
