@@ -249,5 +249,92 @@ println("The percentage of refundable flights is " + refundableFlightsPercentage
       .agg(count("*").alias("total_flights"))
       .orderBy(desc("total_flights"))
     totalFlightsByAirlineCode.show(5)
+
+
+    // Extract month and year from searchDate
+    val flightsWithMonthYear = flightsDS.withColumn("month", month(to_date(col("searchDate"), "yyyy-MM-dd")))
+      .withColumn("year", year(to_date(col("searchDate"), "yyyy-MM-dd")))
+
+    // Group by month and year and calculate average baseFare
+    val fareAnalysisDF = flightsWithMonthYear.groupBy("month", "year")
+      .agg(avg("baseFare").alias("avg_baseFare"))
+      .orderBy("year", "month")
+
+    // Show the fare analysis results
+    fareAnalysisDF.show(5)
+
+
+    // Extract month and year from searchDate column
+    val flightsWithMonthYear1 = flightsDS.withColumn("searchMonth", month(col("searchDate")))
+      .withColumn("searchYear", year(col("searchDate")))
+
+    // Calculate average baseFare by month and year
+    val avgBaseFareByMonthYear = flightsWithMonthYear1.groupBy("searchMonth", "searchYear")
+      .agg(avg("baseFare").alias("avg_baseFare"))
+      .orderBy("searchYear", "searchMonth")
+
+    // Show the results
+    avgBaseFareByMonthYear.show()
+
+
+    // Extract month from searchDate column
+    val flightsWithMonth2 = flightsDS.withColumn("searchMonth", month(col("searchDate")))
+
+    // Calculate average baseFare by month
+    val avgBaseFareByMonth = flightsWithMonth2.groupBy("searchMonth")
+      .agg(avg("baseFare").alias("avg_baseFare"))
+      .orderBy("searchMonth")
+
+    // Show the results
+    avgBaseFareByMonth.show()
+     Extract distinct months from the "searchMonth" column
+    val distinctMonths = flightsDS.select("searchMonth")
+      .distinct()
+      .collect()
+      .map(row => row.getAs[Int]("searchMonth"))
+      .toList
+
+    // Print the distinct months
+    println("Distinct months in the dataset:")
+    distinctMonths.foreach(println)
+
+    // Check if all 12 months are present
+    val allMonthsPresent = (1 to 12).forall(distinctMonths.contains)
+    if (allMonthsPresent) {
+      println("Data for all 12 months is present in the dataset.")
+    } else {
+      println("Data for some months is missing in the dataset.")
+    }
+ Calculate total number of rows in the dataset
+val totalRows = flightsDS.count()
+
+    // Loop through each column in the dataset
+    for (column <- flightsDS.columns) {
+      // Calculate the number of null values in the column
+      val nullCount = flightsDS.filter(col(column).isNull).count()
+
+      // Calculate the percentage of null values in the column
+      val nullPercentage = (nullCount.toDouble / totalRows) * 100
+
+      // Print the results
+      println(s"Column: $column")
+      println(s"Number of Null Values: $nullCount")
+      println(s"Percentage of Null Values: $nullPercentage%")
+      println("-------------------------------------------------")
+    }
+
+    // Extract month and year from the date column
+    val flightsDSWithMonthYear = flightsDS.withColumn("month", month(col("searchDate")))
+      .withColumn("year", year(col("searchDate")))
+
+    // Group by month and year, and calculate average base fare
+    val avgBaseFareByMonthYear = flightsDSWithMonthYear.groupBy("month", "year")
+      .agg(avg("baseFare").alias("avg_base_fare"))
+      .orderBy("year", "month")
+
+    // Print the results
+    println("Average Base Fare by Month and Year:")
+    avgBaseFareByMonthYear.show()
+
   }
 }

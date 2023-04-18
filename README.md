@@ -401,6 +401,41 @@ The code calculates the maximum and minimum values of the "baseFare" column in t
 The code calculates the total number of flights for each unique "segmentsAirlineCodeArray" value in the "parsedData" DataFrame, aliases the result as "total_flights", and orders the result by descending total flights count.
 ![segmentsAirlineCodeArrayTotalNumberOfFlights](NumerOfFlights_SegmentAirplaneCode.JPG)
 
+```
+// Extract month and year from the date column
+val flightsDSWithMonthYear = flightsDS.withColumn("month", month(col("date")))
+                                     .withColumn("year", year(col("date")))
 
+// Group by month and year, and calculate average base fare
+val avgBaseFareByMonthYear = flightsDSWithMonthYear.groupBy("month", "year")
+                                                  .agg(avg("base_fare").alias("avg_base_fare"))
+                                                  .orderBy("year", "month")
+
+// Print the results
+println("Average Base Fare by Month and Year:")
+avgBaseFareByMonthYear.show()
+ ```
+This code first uses the withColumn() function to create two new columns in the dataset, "month" and "year", by extracting the month and year from the "date" column using the month() and year() functions from the org.apache.spark.sql.functions library, respectively.
+Next, it uses the groupBy() and agg() functions to group the dataset by "month" and "year", and calculate the average base fare using the avg() function and aliasing the result as "avg_base_fare". The results are ordered by "year" and "month".
+![null_field_Percentage](nullPercentage1.JPG)
+
+![null_field_Percentage1](nullPercentage.JPG)
+
+```
+// Extract month and year from the date column
+val flightsDSWithMonthYear = flightsDS.withColumn("month", month(col("date")))
+                                     .withColumn("year", year(col("date")))
+
+// Group by month and year, and calculate average base fare
+val avgBaseFareByMonthYear = flightsDSWithMonthYear.groupBy("month", "year")
+                                                  .agg(avg("base_fare").alias("avg_base_fare"))
+                                                  .orderBy("year", "month")
+
+// Print the results
+println("Average Base Fare by Month and Year:")
+avgBaseFareByMonthYear.show()
+```
+The code creates two new columns "month" and "year" by extracting the month and year from the "date" column using Spark's month() and year() functions. Then, it groups the dataset by "month" and "year" using groupBy() and calculates the average base fare using avg() function, aliasing the result as "avg_base_fare" using agg(). Finally, the results are ordered by "year" and "month".
+![baseFare.JPG](baseFare.JPG)
 
 
